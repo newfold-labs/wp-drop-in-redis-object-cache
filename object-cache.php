@@ -1,31 +1,15 @@
 <?php
 /**
- * Bluehost Redis Object Cache
- *
- * Provides a high-performance persistent object cache for WordPress using Redis.
- * Integrated with Bluehost Plugin's Performance module for optimal performance.
- *
- * @package           Bluehost
- * @subpackage        Performance
- * @author            Bluehost / Newfold Digital
- * @copyright         Copyright 2024 Bluehost. All rights reserved.
- * @license           GPL-2.0-or-later
- *
- * @wordpress-plugin
- * Plugin Name:       Bluehost Redis Object Cache
- * Plugin URI:        https://bluehost.com
- * Description:       High-performance Redis-backed object cache for WordPress. Optimized for Bluehost hosting environments.
- * Version:           1.0.0
- * Requires PHP:      7.2
- * Requires at least: 5.0
- * Author:            Bluehost
- * Author URI:        https://bluehost.com
- * License:           GPL-2.0-or-later
- * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
- * Text Domain:       wp-plugin-bluehost
+ * Plugin Name: Redis Object Cache Drop-In
+ * Description: A persistent object cache powered by Redis.
+ * Version: 1.0.0
+ * Author: Newfold Digital
+ * License: GPLv3
+ * License URI: http://www.gnu.org/licenses/gpl-3.0.html
+ * Requires PHP: 7.2
  */
 
-defined( '\\ABSPATH' ) || exit;
+defined( 'ABSPATH' ) || exit;
 
 // phpcs:disable Generic.WhiteSpace.ScopeIndent.IncorrectExact, Generic.WhiteSpace.ScopeIndent.Incorrect
 if ( ! defined( 'WP_REDIS_DISABLED' ) || ! WP_REDIS_DISABLED ) :
@@ -859,25 +843,19 @@ function wp_cache_add_non_persistent_groups( $groups ) {
     protected function connect_using_predis( $parameters ) {
         $client = 'Predis';
 
-        // Load Predis client library from Bluehost Plugin
+        // Load Predis client library from Bluehost Plugin vendor
         if ( ! class_exists( 'Predis\Client' ) ) {
-            $predis_autoload = '/vendor/predis/predis/autoload.php';
-            $predis_paths = [];
-
-            // Locate Predis via Bluehost Plugin's Performance module
-            // Check common Bluehost Plugin installation paths
+            $base_path = defined( 'WP_PLUGIN_DIR' ) ? WP_PLUGIN_DIR : WP_CONTENT_DIR . '/plugins';
             $bluehost_plugin_dirs = [ 'bluehost-wordpress-plugin', 'wp-plugin-bluehost' ];
+
+            // Try Bluehost plugin vendor: plugin root vendor first, then performance module vendor
+            $predis_paths = [];
             foreach ( $bluehost_plugin_dirs as $plugin_dir ) {
-                $module_path = '/vendor/newfold-labs/wp-module-performance' . $predis_autoload;
-                if ( defined( 'WP_PLUGIN_DIR' ) ) {
-                    $predis_paths[] = WP_PLUGIN_DIR . '/' . $plugin_dir . $module_path;
-                }
-                if ( defined( 'WP_CONTENT_DIR' ) ) {
-                    $predis_paths[] = WP_CONTENT_DIR . '/plugins/' . $plugin_dir . $module_path;
-                }
+                $plugin_base = $base_path . '/' . $plugin_dir;
+                $predis_paths[] = $plugin_base . '/vendor/predis/predis/autoload.php';
+                $predis_paths[] = $plugin_base . '/vendor/newfold-labs/wp-module-performance/vendor/predis/predis/autoload.php';
             }
 
-            // Try to load Predis from any available path
             $loaded = false;
             foreach ( $predis_paths as $path ) {
                 if ( $path && is_readable( $path ) ) {
@@ -887,19 +865,12 @@ function wp_cache_add_non_persistent_groups( $groups ) {
                 }
             }
 
-            // Fallback: attempt to load via parent plugin's Composer autoloader
+            // Fallback: Bluehost plugin Composer autoloader
             if ( ! $loaded && ! class_exists( 'Predis\Client' ) ) {
                 foreach ( $bluehost_plugin_dirs as $plugin_dir ) {
-                    $autoloader_path = null;
-                    if ( defined( 'WP_PLUGIN_DIR' ) ) {
-                        $autoloader_path = WP_PLUGIN_DIR . '/' . $plugin_dir . '/vendor/autoload.php';
-                    } elseif ( defined( 'WP_CONTENT_DIR' ) ) {
-                        $autoloader_path = WP_CONTENT_DIR . '/plugins/' . $plugin_dir . '/vendor/autoload.php';
-                    }
-                    
-                    if ( $autoloader_path && is_readable( $autoloader_path ) ) {
+                    $autoloader_path = $base_path . '/' . $plugin_dir . '/vendor/autoload.php';
+                    if ( is_readable( $autoloader_path ) ) {
                         require_once $autoloader_path;
-                        // Check again after loading autoloader
                         if ( class_exists( 'Predis\Client' ) ) {
                             $loaded = true;
                             break;
@@ -1000,14 +971,28 @@ function wp_cache_add_non_persistent_groups( $groups ) {
 
         $client = 'Credis';
 
-        // Locate Credis library via Bluehost Plugin (legacy support only)
-        $credis_base = '/vendor/newfold-labs/wp-module-performance/vendor/colinmollenhour/credis/';
+        // Locate Credis library from Bluehost Plugin vendor (legacy support only)
         $base_path = defined( 'WP_PLUGIN_DIR' ) ? WP_PLUGIN_DIR : WP_CONTENT_DIR . '/plugins';
-        $creds_path = $base_path . '/bluehost-wordpress-plugin' . $credis_base;
-        
-        // Try alternative plugin directory name
-        if ( ! file_exists( $creds_path ) ) {
-            $creds_path = $base_path . '/wp-plugin-bluehost' . $credis_base;
+        $bluehost_plugin_dirs = [ 'bluehost-wordpress-plugin', 'wp-plugin-bluehost' ];
+
+        // Try Bluehost plugin vendor: plugin root first, then performance module vendor
+        $creds_path = null;
+        foreach ( $bluehost_plugin_dirs as $plugin_dir ) {
+            $plugin_base = $base_path . '/' . $plugin_dir;
+            if ( is_dir( $plugin_base . '/vendor/colinmollenhour/credis' ) ) {
+                $creds_path = $plugin_base . '/vendor/colinmollenhour/credis/';
+                break;
+            }
+            if ( is_dir( $plugin_base . '/vendor/newfold-labs/wp-module-performance/vendor/colinmollenhour/credis' ) ) {
+                $creds_path = $plugin_base . '/vendor/newfold-labs/wp-module-performance/vendor/colinmollenhour/credis/';
+                break;
+            }
+        }
+
+        if ( $creds_path === null ) {
+            throw new Exception(
+                'Credis library not found. Please ensure the Bluehost Plugin is installed with the Performance module enabled, or delete the object-cache.php file.'
+            );
         }
 
         $to_load = [];
