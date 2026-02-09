@@ -245,8 +245,7 @@ function wp_cache_init() {
     }
 
     if ( ! ( $wp_object_cache instanceof WP_Object_Cache ) ) {
-        $fail_gracefully = defined( 'WP_REDIS_GRACEFUL' ) && WP_REDIS_GRACEFUL;
-
+        $fail_gracefully = (defined( 'WP_REDIS_GRACEFUL' ) && WP_REDIS_GRACEFUL) || (!defined( 'WP_REDIS_GRACEFUL' ) && !defined( 'WP_REDIS_PASSWORD' ));
         // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
         $wp_object_cache = new WP_Object_Cache( $fail_gracefully );
     }
