@@ -1782,6 +1782,9 @@ function wp_cache_add_non_persistent_groups( $groups ) {
                  */
                 do_action( 'redis_object_cache_flush', $results, 0, $selective, $salt, $execute_time );
             }
+        } else {
+            // Do not hard fail if Redis is still being provisioned or is otherwise unavailable.
+            return $this->fail_gracefully;
         }
 
         if ( empty( $results ) ) {
@@ -1827,7 +1830,7 @@ function wp_cache_add_non_persistent_groups( $groups ) {
         }
 
         if ( ! $this->redis_status() ) {
-            return false;
+            return $this->fail_gracefully;
         }
 
         $start_time = microtime( true );
