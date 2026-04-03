@@ -9,40 +9,29 @@ height="42" />
 
 [![License](https://img.shields.io/github/license/newfold-labs/wp-drop-in-redis-object-cache?labelColor=333333&color=666666&style=for-the-badge)](https://raw.githubusercontent.com/newfold-labs/wp-drop-in-redis-object-cache/main/LICENSE)
 
-A high-performance persistent object cache drop-in for WordPress powered by Redis. Integrated with Bluehost Plugin's Performance module for optimal performance.
+A persistent object cache drop-in for WordPress powered by Redis. Replaces the default in-memory object cache with a Redis-backed implementation for improved performance across page loads.
 
-## Overview
+## Features
 
-This drop-in provides a Redis-backed object cache for WordPress, replacing the default in-memory object cache with a persistent Redis implementation.
+- Supports PhpRedis, Predis, and Credis client libraries
+- Redis Cluster, Sentinel, Replication, and Sharding support
+- Selective flush via key prefix (`WP_REDIS_PREFIX`)
+- Per-group flush and unflushable groups
+- Batch operations (`add_multiple`, `set_multiple`, `get_multiple`, `delete_multiple`)
+- Optional igbinary serialization
+- Graceful fallback to in-memory cache on connection failure
 
 ## Requirements
 
 - WordPress 5.0+
 - PHP 7.2+
 - Redis server
-- Bluehost Plugin with Performance module enabled (provides Predis library)
+- A supported Redis client library (PhpRedis extension, Predis, or Credis)
 
 ## Installation
 
-1. Place `object-cache.php` in your WordPress `/wp-content/` directory
-2. Ensure the Bluehost Plugin is installed with the Performance module in it
-3. Configure Redis connection settings in `wp-config.php`
-
-## Configuration
-
-Add the following constants to your `wp-config.php` file:
-
-```php
-// Redis Object Cache Configuration
-define( 'WP_REDIS_HOST', '127.0.0.1' );
-define( 'WP_REDIS_PORT', 6379 );
-define( 'WP_REDIS_DATABASE', 0 );
-define( 'WP_REDIS_GRACEFUL', true );
-```
-
-See the [documentation](https://github.com/newfold-labs/wp-drop-in-redis-object-cache) for all available configuration options.
+Place `object-cache.php` in your WordPress `wp-content/` directory.
 
 ## License
 
-GPL-2.0-or-later
-
+GPL-3.0-or-later
