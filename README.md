@@ -5,10 +5,6 @@ height="42" />
 
 # WordPress Redis Object Cache Drop-In
 
-[![Version Number](https://img.shields.io/github/v/release/newfold-labs/wp-drop-in-redis-object-cache?color=77dd77&labelColor=00000&style=for-the-badge)](https://github.com/newfold-labs/wp-drop-in-redis-object-cache/releases)
-
-[![License](https://img.shields.io/github/license/newfold-labs/wp-drop-in-redis-object-cache?labelColor=333333&color=666666&style=for-the-badge)](https://raw.githubusercontent.com/newfold-labs/wp-drop-in-redis-object-cache/main/LICENSE)
-
 A persistent object cache drop-in for WordPress powered by Redis. Replaces the default in-memory object cache with a Redis-backed implementation for improved performance across page loads.
 
 ## Features
